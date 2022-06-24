@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon authserver.js",
-    "start": "node authserver.js"
+    "start": "node /app/authserver.js"
   },
   "author": "anupam1897",
   "license": "ISC",
