@@ -1,4 +1,4 @@
-const pool = require('./database').default;
+const pool = require('./database');
 
 module.exports = {
     //login via mobile
