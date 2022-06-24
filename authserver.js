@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { getUserByUserMobile, getUserData, create, userWithMobile }= require('./auth/authServer');
+const { getUserByUserMobile, getUserData, create, userWithMobile }= require('./auth.service');
 const { hashSync , genSaltSync, compareSync} = require('bcryptjs');
 const { sign} = require('jsonwebtoken');
 const express = require('express');
