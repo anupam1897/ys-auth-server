@@ -28,7 +28,7 @@ let refreshTokens = []
 
 
 //Server ------------------------------//
-app.listen(process.env.AUTH_SERVER_PORT, ()=> {
+app.listen(process.env.PORT || process.env.AUTH_SERVER_PORT, ()=> {
     console.log(`listening on port: ${process.env.AUTH_SERVER_PORT}`);
 })
 
