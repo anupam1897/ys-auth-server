@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="./getOrders.js"></script>
+    <title>YS store</title>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar navbar-light bg-light">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="#">
+                <img src="../web/assets/logo.png" alt="" width="30" height="30" class="d-inline-block align-text-top">
+                <strong class="text-muted">Yellow Store</strong>
+
+              </a>
+            </div>
+          </nav>
+        
+
+        <!-- <div class="row align-items-start">
+          <div class="col-2">
+            <h1>YS</h1>
+          </div>
+          <div class="col-10">
+            <h4>Yellow Store</h4>
+          </div> -->
+          
+    </div>
+    <div class="div">
+        &nbsp;
+    </div>
+    <div class="container">
+       <div class="text-align-center">
+        <h5>
+            Consumer Mobile Number
+            <small class="text-muted">+91 8830569128</small>
+          </h5>
+       </div>
+    
+       
+        <div class="row align-items-start">
+            
+            <div class="col-3">
+                <h6 class="h6">
+                    <small class="text-muted">Last Order Date</small>
+                </h6>
+
+            </div>
+            <div class="col-9">
+                <h6 class="h6">
+                    Jan 16, 2022
+                </h6>
+            </div>
+        </div>
+
+        <div class="row align-items-start">
+            
+            <div class="col-3">
+                <h6 class="h6">
+                    <small class="text-muted">Last Order Value</small>
+                </h6>
+
+            </div>
+            <div class="col-9">
+                <h6 class="h6">
+                    &#x20B9 160
+                </h6>
+            </div>
+        </div>
+
+        <div class="row align-items-start">
+            
+            <div class="col-3">
+                <h6 class="h6">
+                    <small class="text-muted">Total Orders</small>
+                </h6>
+
+            </div>
+            <div class="col-9">
+                <h6 class="h6">
+                    16
+                </h6>
+            </div>
+        </div>
+    
+        <hr>
+
+        <div id="accordion">
+  
+        </div>
+
+
+
+
+        <script src="../node_modules//axios/dist/axios.min.js"></script>
+        <script>
+        //  fetch ("http://localhost:3000/api/orders/mobileOrders",{
+        //    method: 'POST',
+        //    body: JSON.stringify({
+        //      customer_mobile : "123456789"
+        //    }),
+        //    headers: {
+        //     "Content-Type": "application/json; charset = UTF-8; Access-Control-Allow-Origin: *; Access-Control-Allow-Methods:POST,PATCH,OPTIONS" 
+        //    }
+        //  })
+        //  .then(function(response){
+        //    return response.json()
+        //  })
+        //  .then(function(data){
+        //    console.log(data);
+        //  })
+
+ 
+
+
+
+
+           const apiResult = [{
+  title: "title1",
+  description: "desc1",
+  output: "out1"
+}, {
+  title: "title2",
+  description: "desc2",
+  output: "out2"
+}, {
+  title: "title3",
+  description: "desc3",
+  output: "out3"
+}];
+
+console.log(apiResult);
+
+const container = document.getElementById('accordion');
+
+apiResult.forEach((result, idx) => {
+  // Create card element
+  const card = document.createElement('div');
+  card.classList = 'card-body';
+
+  // Construct card content
+  const content = `
+  
+  <div class="card m-1">
+            <div class="card-body bg-light">
+
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">Order No.: </small>
+                        <h6 class="h6">1160456574581</h6>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Total Amount Paid: </small>
+                        <h6 class="h6">&#x20B9 104</h6>
+
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="container">
+                    <div class="row">
+                      <div class="col-6">
+                        <strong>Item Name</strong>
+                      </div>
+                      <div class="col-3">
+                        <strong>Quantity</strong>
+                      </div>
+                      <div class="col-3">
+                        <strong>Price</strong>
+                      </div>
+                    </div>
+                    <hr>
+                  </div>
+
+                  <div class="container">
+                    
+
+                    <div class="container">
+                        <div class="row">
+                          <div class="col-6">
+                            Tata Sugar
+                          </div>
+                          <div class="col-3">
+                            1 Packet
+                          </div>
+                          <div class="col-3">
+                            &#x20B9 34
+                          </div>
+
+                        <div class="col-6">
+                            Cadbury roasted nuts and almonds
+                          </div>
+                          <div class="col-3">
+                            1 Packet
+                          </div>
+                          <div class="col-3">
+                            &#x20B9 40
+                          </div>
+
+                          <div class="col-6">
+                            Marie Gold
+                          </div>
+                          <div class="col-3">
+                            3 Packet
+                          </div>
+                          <div class="col-3">
+                            &#x20B9 30
+                          </div>
+
+
+                          
+                        </div>
+                      </div>
+                  </div>
+            </div>
+        </div>
+
+  `;
+
+  // Append newyly created card element to the container
+  container.innerHTML += content;
+})
+
+
+        </script>
+
+
+
+
+
+       
+        
+    </div>
+    
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+</body>
+</html>

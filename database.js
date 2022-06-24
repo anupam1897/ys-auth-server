@@ -9,4 +9,6 @@ const pool = createPool({
     connectionLimit: process.env.DB_CONNECTION_LIMIT,
 })
 
+
+
 module.exports = pool; 

@@ -5,4 +5,4 @@ WORKDIR /app/auth
 RUN npm install
 COPY . .
 EXPOSE 4000
-CMD node authserver
+CMD node authServer

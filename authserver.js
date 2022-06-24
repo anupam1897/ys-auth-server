@@ -1,71 +1,123 @@
-require('dotenv').config()
-const { getUserByUserMobile }= require('./auth/authService');
-const { compareSync} = require('bcryptjs');
-const {sign} = require('jsonwebtoken');
-const express = require('express')
+require('dotenv').config();
+const { getUserByUserMobile, getUserData, create, userWithMobile }= require('./auth/authServer');
+const { hashSync , genSaltSync, compareSync} = require('bcryptjs');
+const { sign} = require('jsonwebtoken');
+const express = require('express');
+
+//redis service
+const { createClient } = require('redis');
+
+
+const client = createClient({
+    url: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+
+  });
+
+client.on('error', (err) => console.log('Redis Client Error', err));
+client.connect();
+const EXPIRES_IN = 600 ;
 const app = express()
 // const loginRouter = require('./auth/authRouter');
-const jwt = require('jsonwebtoken')
-
+const jwt = require('jsonwebtoken');
+const { verify } = require('jsonwebtoken');
+const { application } = require('express');
 
 app.use(express.json())
 
 let refreshTokens = []
 
-app.get('/api', authenticateToken, (req, res) => {
+
+//Server ------------------------------//
+app.listen(process.env.AUTH_SERVER_PORT, ()=> {
+    console.log(`listening on port: ${process.env.AUTH_SERVER_PORT}`);
+})
+
+
+//Check Api
+app.get('/api', (req, res) => {
     res.json({
         success: 1,
-        message: 'Auth Server Working, make login request!'
+        message: 'Auth Server Working, make login request!',
     })
 })
 
-// app.use('/api', loginRouter);
+//send otp
+app.post('/sendOTP', async (req, res)=>{
+    const mobile = req.body.mobile.toString();
+    if(await client.exists(key = mobile) == 1){
+        const existingOTP = await client.get(key = mobile);
+        client.setEx(
+            key = mobile, 
+            seconds = EXPIRES_IN, 
+            value = existingOTP);
+        const otpRead = await client.get(mobile);
+        
+        return res.status(200).json({  
+                success: 1,
+                message : `Your OTP for ${mobile} is ${otpRead}`
+            })
+    }else {
+        const otp = createOTP().toString();
+        
+        client.setEx(
+            key = mobile, 
+            seconds = EXPIRES_IN, 
+            value = otp);
+        otpRead = await client.get(mobile);
+        return res.status(200).json({  
+                success: 1,
+                message : `Your OTP for ${mobile} is ${otpRead}`
+            })
+    }
+    }
+)
 
-
-// app.post('/login', (req, res)=>{
-//     //authentication user
-    
-//     const username =  req.body.username
-//     const user = {name: username}
-//     const accessToken = generateAccessToken(user)
-//     const refreshToken = jwt.sign(user, process.env.REFRESH_SECRET)
-//     refreshTokens.push(refreshToken)
-//     res.json({accessToken: accessToken, refreshToken : refreshToken})
-
-// })
-app.post('/login', (req, res)=>{
+//User login
+app.post('/login',  (req, res)=>{
     const body = req.body;
-    getUserByUserMobile(body.mobile, (error, results)=>{
+    userWithMobile(body.mobile, (error, results)=>{
         if(error){
             console.log(error);
         }
         if(!results){ 
             return res.json({ 
                 success: 0,
-                data: "Invalid Phone number"
+                data: "Invalid Phone number",                
             });
-        }
-        
+        }       
         const result = compareSync(body.password, results.password);
+        
             if(result){
                 results.password = undefined;
                 const accessToken = sign(
                     {result: results}, 
                     process.env.ACCESS_SECRET,
-                    { expiresIn : "1h"} 
+                    { expiresIn : "10h"} 
                 );
                 const refreshToken = sign(
                     {result: results}, 
                     process.env.REFRESH_SECRET,
-                    { expiresIn : "1h"} 
+                    { expiresIn : "24h"} 
                 );
                 refreshTokens.push(refreshToken);
-                return res.json({ 
-                    success: 1,
-                    message: "Login successful",
-                    accessToken: accessToken, 
-                    refreshToken: refreshToken
-                });
+
+                getUserData(body.mobile, (error, results)=>{
+                    if(error){
+                        console.log(error);
+                    }
+                    if(!results){
+                        return res.json({
+                            success: 0,
+                            data: "Couldn't find user data"
+                        });
+                    }
+                    return res.json({
+                        userId : results.user_id,
+                        mobile: results.mobile,
+                        accessToken: accessToken,
+                        refreshToken: refreshToken
+                    })
+                })
             }
             else{
               return res.json({
@@ -77,54 +129,55 @@ app.post('/login', (req, res)=>{
 } 
 );
 
+//register new user
+app.post('/register',verifyOTP, (req, res)=>{
+    const body = req.body;
+    body.password = hashSync(body.password, genSaltSync(10));
+    
+              
+    create(body,(error, results)=>{
+        if (error){ 
+            console.log(error);
+                return res.status(500).json({ 
+                    success: 0,
+                    message: "Database Connection Error"
+                });
+            }
+            else{
 
-// module.exports = {
-//     //login with mobile 
-//     login: (req, res)=>{
-//         const body = req.body;
-//         getUserByUserMobile(body.mobile, (error, results)=>{
-//             if(error){
-//                 console.log(error);
-//             }
-//             if(!results){ 
-//                 return res.json({ 
-//                     success: 0,
-//                     data: "Invalid Phone number"
-//                 });
-//             }
-            
-//             const result = compareSync(body.password, results.password);
-//                 if(result){
-//                     results.password = undefined;
-//                     const accessToken = sign(
-//                         {result: results}, 
-//                         process.env.ACCESS_SECRET,
-//                         { expiresIn : "1h"} 
-//                     );
-//                     const refreshToken = sign(
-//                         {result: results}, 
-//                         process.env.REFRESH_SECRET,
-//                         { expiresIn : "1h"} 
-//                     );
-//                     return res.json({ 
-//                         success: 1,
-//                         message: "Login successful",
-//                         accessToken: accessToken, 
-//                         refreshToken: refreshToken
-//                     });
-//                 }
-//                 else{
-//                   return res.json({
-//                       success: 0,
-//                       data: "Invalid Password"
-//                   });
-//             }
-//         });
-//     }
+                getUserData(body.mobile, (error, results)=>{
+                    if(error){
+                        console.log(error);
+                    }
+                    if(!results){
+                        return res.json({
+                            success: 0,
+                            data: "Couldn't find user data"
+                        });
+                    }
+                    const accessToken = sign(
+                    {result: results}, 
+                    process.env.ACCESS_SECRET,
+                    { expiresIn : "10h"} 
+                );
+                const refreshToken = sign(
+                    {result: results}, 
+                    process.env.REFRESH_SECRET,
+                    { expiresIn : "24h"} 
+                );
 
-// }
+                    return res.json({
+                        userId : results.user_id,
+                        mobile: results.mobile,
+                        accessToken: accessToken,
+                        refreshToken: refreshToken
+                    })
+                })
+            }
+    });
+});
 
-
+//Generate New Access Token
 app.post('/token', (req, res)=>{
     const refreshToken = req.body.token
     
@@ -139,19 +192,13 @@ app.post('/token', (req, res)=>{
         const accessToken = generateAccessToken({name : user.name})
         res.json({accessToken:accessToken})
     })
-})
+});
 
 
-//delete the refresh token in the frontend from the preference storage!
-//to logout
-// app.delete('/logout', (req, res)=> {
-//     refreshTokens = refreshTokens.filter(token => token !== req.body.token)
-//     res.sendStatus(204)
-//     console.log('Logged out');
-// })
+//----------------Functions-------------------//
 
 
-
+//Authenticate Token: Header BearerToken
 function authenticateToken(req, res,  next) {
     const authHeader = req.headers['authorization']
     const token =  authHeader && authHeader.split(' ')[1]
@@ -161,17 +208,33 @@ function authenticateToken(req, res,  next) {
         if(err) return res.sendStatus(403)
         next()
     })
-}
+};
 
+//Supporting Function: Authenticate Token
 function generateAccessToken(user){
-   return jwt.sign(user, process.env.ACCESS_SECRET, {expiresIn: '3600s'}) 
-   
+    return jwt.sign(user, process.env.ACCESS_SECRET, {expiresIn: '36000s'}) 
+}
+
+//Creates 6 digit otp string
+async function verifyOTP(req, res, next){
+    const mobile = req.body.mobile.toString();
+    const otp = req.body.otp.toString();
+    if(await client.exists(key = mobile) == 1){
+        if (await client.get(key = mobile) == otp) {
+            next();
+        } else {
+            res.json({
+                "message" : "Invalid OTP"
+            }) 
+        }
+    }else{
+        res.json({
+            "message" : "Invalid Phone Number"
+        })
+    }
 }
 
 
-
-
-app.listen(process.env.PORT || process.env.AUTH_SERVER_PORT, ()=> {
-    console.log(`listening on port: ${process.env.AUTH_SERVER_PORT}`);
-})
-   
+function createOTP(){
+    return otp = Math.floor(Math.random()*1e6+ 100000).toString().slice(0, 6);
+}
