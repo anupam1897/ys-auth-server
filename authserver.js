@@ -112,6 +112,7 @@ app.post('/login',  (req, res)=>{
                         });
                     }
                     return res.json({
+                        success: 1,
                         userId : results.user_id,
                         mobile: results.mobile,
                         accessToken: accessToken,
@@ -167,6 +168,7 @@ app.post('/register',verifyOTP, (req, res)=>{
                 );
 
                     return res.json({
+                        success: 1,
                         userId : results.user_id,
                         mobile: results.mobile,
                         accessToken: accessToken,
@@ -183,14 +185,19 @@ app.post('/token', (req, res)=>{
     
     if(refreshToken==null) return res.sendStatus(401)
     if (!refreshTokens.includes(refreshToken)) return res.status(403).json({
+        success: 0,
         message: 'Refresh token not received'
     })
     jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, user)=> {
         if(err) return res.status(403).json({
+            success: 0,
             message: 'Refresh token not valid',
         })
         const accessToken = generateAccessToken({name : user.name})
-        res.json({accessToken:accessToken})
+        res.json({            
+            success: 1,
+            accessToken:accessToken
+        })
     })
 });
 
@@ -224,12 +231,14 @@ async function verifyOTP(req, res, next){
             next();
         } else {
             res.json({
-                "message" : "Invalid OTP"
+                success: 0,
+                message : "Invalid OTP"
             }) 
         }
     }else{
         res.json({
-            "message" : "Invalid Phone Number"
+            success: 0,
+            message : "Invalid Phone Number"
         })
     }
 }
