@@ -55,6 +55,21 @@ module.exports = {
         });
     },
 
+    updateUser: (data, callback)=>{
+        pool.query(`update user set password = ? WHERE mobile = ?`, 
+        [
+            data.password,
+            data.mobile
+        ],
+        (err, results, fields) => {
+            if(err) {
+                return callback(err);
+            }
+            return callback(null, results);
+        });
+        
+    }
+
 }
 
 

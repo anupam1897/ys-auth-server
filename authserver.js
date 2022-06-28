@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { getUserByUserMobile, getUserData, create, userWithMobile }= require('./auth.service');
+const { getUserByUserMobile, getUserData, create, userWithMobile, updateUser }= require('./auth.service');
 const { hashSync , genSaltSync, compareSync} = require('bcryptjs');
 const { sign} = require('jsonwebtoken');
 const express = require('express');
@@ -71,6 +71,66 @@ app.post('/sendOTP', async (req, res)=>{
     }
     }
 )
+//get otp
+app.get('/:mobile', async (req, res)=>{
+    const mobile = req.params.mobile.toString();
+    if(await client.exists(key = mobile) == 1){
+        const existingOTP = await client.get(key = mobile);
+        client.setEx(
+            key = mobile, 
+            seconds = EXPIRES_IN, 
+            value = existingOTP);
+        const otpRead = await client.get(mobile);
+        
+        return res.status(200).json({  
+                success: 1,
+                message : `Your OTP for ${mobile} is ${otpRead}`
+            })
+    }else {
+        const otp = createOTP().toString();
+        
+        client.setEx(
+            key = mobile, 
+            seconds = EXPIRES_IN, 
+            value = otp);
+        otpRead = await client.get(mobile);
+        return res.status(200).json({  
+                success: 1,
+                message : `Your OTP for ${mobile} is ${otpRead}`
+            })
+    }
+    }
+)
+
+
+//forgot password
+app.post('/forgotPassword', verifyOTP, (req, res)=>{
+    const body = req.body;
+    body.password = hashSync(body.password, genSaltSync(10));
+    updateUser(body, (err, results)=>{
+        if (err){ 
+            console.log(err);
+            return res.status(500).json({ 
+                success: 0,
+                message: "Database Connection Error"
+            });
+        }
+        if(results.affectedRows == 0){
+            return res.status(500).json({ 
+                success: 0,
+                message: "No user found with mobile number"
+            });
+        } else{
+            
+            return res.status(200).json({
+                success: 1,
+                message: "User password updated"
+                
+            })   
+        }
+    })
+
+});
 
 //User login
 app.post('/login',  (req, res)=>{
@@ -134,8 +194,6 @@ app.post('/login',  (req, res)=>{
 app.post('/register',verifyOTP, (req, res)=>{
     const body = req.body;
     body.password = hashSync(body.password, genSaltSync(10));
-    
-              
     create(body,(error, results)=>{
         if (error){ 
             console.log(error);
@@ -224,9 +282,23 @@ function generateAccessToken(user){
 
 //Creates 6 digit otp string
 async function verifyOTP(req, res, next){
+    // req.body.otp == null ? 
+    // res.json({
+    //     success: 0,
+    //     message : "Invalid Phone Number"
+    // }) : otp = req.body.otp.toString()
+    // ;
+    // req.body.mobile == null ? 
+    // res.json({
+    //     success: 0,
+    //     message : "Invalid Phone Number"
+    // }) : mobile = req.body.mobile.toString()
+    // ;
+
     const mobile = req.body.mobile.toString();
     const otp = req.body.otp.toString();
-    if(await client.exists(key = mobile) == 1){
+    
+    if(await client.exists(key = mobile  ) == 1){
         if (await client.get(key = mobile) == otp) {
             next();
         } else {
