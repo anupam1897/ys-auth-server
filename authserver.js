@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { getUserByUserMobile, getUserData, create, userWithMobile, updateUser }= require('./auth.service');
+const { getUserByUserMobile, getUserData, create, userWithMobile, updateUser, updateUserDetails, updateUserMobile, getUser }= require('./auth.service');
 const { hashSync , genSaltSync, compareSync} = require('bcryptjs');
 const { sign} = require('jsonwebtoken');
 const express = require('express');
@@ -72,6 +72,10 @@ app.post('/sendOTP', async (req, res)=>{
     }
 )
 //get otp
+
+//to be deleted in production
+
+
 app.get('/:mobile', async (req, res)=>{
     const mobile = req.params.mobile.toString();
     if(await client.exists(key = mobile) == 1){
@@ -151,13 +155,13 @@ app.post('/login',  (req, res)=>{
                 results.password = undefined;
                 const accessToken = sign(
                     {result: results}, 
-                    process.env.ACCESS_SECRET,
-                    { expiresIn : "10h"} 
+                    process.env.ACCESS_SECRET
+              
                 );
                 const refreshToken = sign(
                     {result: results}, 
-                    process.env.REFRESH_SECRET,
-                    { expiresIn : "24h"} 
+                    process.env.REFRESH_SECRET
+                  
                 );
                 refreshTokens.push(refreshToken);
 
@@ -190,6 +194,27 @@ app.post('/login',  (req, res)=>{
 } 
 );
 
+app.post('/getUser', authenticateToken, (req, res)=>{
+    const body = req.body;
+        getUser(body, (error, results) => {
+            if(error){
+                console.log(error);
+                return;
+            }
+            if(!results){
+                return res.status(200).json({
+                    success: 0,
+                    data: "not found"
+                });
+            }
+            return res.status(200).json({
+                success: 1,
+                data: results
+            });
+        });
+})
+
+
 //register new user
 app.post('/register',verifyOTP, (req, res)=>{
     const body = req.body;
@@ -216,13 +241,13 @@ app.post('/register',verifyOTP, (req, res)=>{
                     }
                     const accessToken = sign(
                     {result: results}, 
-                    process.env.ACCESS_SECRET,
-                    { expiresIn : "10h"} 
+                    process.env.ACCESS_SECRET
+                    
                 );
                 const refreshToken = sign(
                     {result: results}, 
-                    process.env.REFRESH_SECRET,
-                    { expiresIn : "24h"} 
+                    process.env.REFRESH_SECRET
+                    
                 );
 
                     return res.json({
@@ -236,6 +261,72 @@ app.post('/register',verifyOTP, (req, res)=>{
             }
     });
 });
+
+
+
+
+
+
+
+
+
+//update user details
+
+app.post('/updateUserDetails', authenticateToken,  (req, res)=>{
+    const body = req.body;
+    
+    updateUserDetails(body, (err, results)=>{
+        if (err){ 
+            console.log(err);
+            return res.status(500).json({ 
+                success: 0,
+                message: "Database Connection Error"
+            });
+        }
+        if(results.affectedRows == 0){
+            return res.status(500).json({ 
+                success: 0,
+                message: "No user found with user Id"
+            });
+        } else{
+            
+            return res.status(200).json({
+                success: 1,
+                message: "User details updated"
+                
+            })   
+        }
+    })
+})
+
+app.post('/updateUserMobile', verifyOTP, (req, res)=>{
+    const body = req.body;
+    
+    updateUserMobile(body, (err, results)=>{
+        if (err){ 
+            console.log(err);
+            return res.status(500).json({ 
+                success: 0,
+                message: "Database Connection Error"
+            });
+        }
+        if(results.affectedRows == 0){
+            return res.status(500).json({ 
+                success: 0,
+                message: "No user found with user Id"
+            });
+        } else{
+            
+            return res.status(200).json({
+                success: 1,
+                message: "User mobile updated"
+                
+            })   
+        }
+    })
+})
+
+
 
 //Generate New Access Token
 app.post('/token', (req, res)=>{
@@ -277,7 +368,7 @@ function authenticateToken(req, res,  next) {
 
 //Supporting Function: Authenticate Token
 function generateAccessToken(user){
-    return jwt.sign(user, process.env.ACCESS_SECRET, {expiresIn: '36000s'}) 
+    return jwt.sign(user, process.env.ACCESS_SECRET) 
 }
 
 //Creates 6 digit otp string
