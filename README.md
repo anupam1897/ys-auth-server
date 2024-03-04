@@ -1,6 +1,7 @@
 # ys-auth: Authentication and Authorization
 
 This is a simple API written in JavaScript for authenticating users and authorizing resource access. It uses JWT for token generation and verification.
+Also checkout E-Commerce API [ys-api-server](https://github.com/anupam1897/ys-api-server.git).
 
 ## Features
 
